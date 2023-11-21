@@ -1,3 +1,10 @@
+/* [{"user_id":2,"name":"Joe Biden","username":"JoeBiden","password":"$2b$10$2are6Ba69oi/Cai4aT/VM.t7AO7TsQx/.Ogz.7XG4qjuMil0v80aq","gender":"male"}]
+where follower user id = 2
+[{"follower_id":4,"follower_user_id":2,"following_user_id":1},{"follower_id":5,"follower_user_id":2,"following_user_id":4}]
+following user id =2
+[{"follower_id":1,"follower_user_id":1,"following_user_id":2},{"follower_id":8,"follower_user_id":4,"following_user_id":2}]
+
+*/
 const express = require("express");
 const path = require("path");
 const { open } = require("sqlite");
@@ -51,6 +58,7 @@ app.post("/register/", async (request, response) => {
   const hashedPassword = await bcrypt.hash(request.body.password, 10);
   const selectUserQuery = `SELECT * FROM user WHERE username = '${username}'`;
   const dbUser = await db.get(selectUserQuery);
+  console.log(dbUser);
   if (dbUser === undefined) {
     if (password.length < 6) {
       response.status(400);
@@ -103,7 +111,7 @@ app.post("/login", async (request, response) => {
 app.get("/user/tweets/feed/", authenticateToken, async (request, response) => {
   const tweetsQ = `
  SELECT
-  username,
+   username,
   tweet,
   date_time AS dateTime
 FROM
@@ -112,12 +120,25 @@ WHERE
     follower.follower_user_id=2
 ORDER BY
   date_time DESC
-LIMIT
-  4;`;
-  tweets = await db.all(tweetsQ);
-  //console.log(c);
-  response.send(tweets);
+LIMIT 4
+  ;`;
+  feed = await db.all(tweetsQ);
+  console.log(feed);
+  response.send(feed);
+  /*const lq = `
+  SELECT count(*)AS c FROM like WHERE tweet_id=1
+  ;`;
+  l = await db.all(lq);
+  console.log(l[0].c);
+  response.send(l);
+  const rq = `
+  SELECT count(*)AS c FROM like WHERE tweet_id=1
+  ;`;
+  r = await db.all(rq);
+  console.log(r[0].c);
+  response.send(r);*/
 });
+
 //API 4
 app.get("/user/following/", authenticateToken, async (request, response) => {
   const getData = `
@@ -130,6 +151,12 @@ app.get("/user/following/", authenticateToken, async (request, response) => {
       ;`;
   const r = await db.all(getData);
   response.send(r);
+  /*const q = `
+  SELECT * FROM follower JOIN user ON follower.follower_user_id=user.user_id WHERE follower_user_id=2
+  ;`;
+  d = await db.all(q);
+  //console.log(c);
+  response.send(d);*/
 });
 //API 5
 app.get("/user/followers/", authenticateToken, async (request, response) => {
@@ -149,7 +176,7 @@ app.get("/tweets/:tweetId/", authenticateToken, async (request, response) => {
   const { tweetId } = request.params;
   const getD = `
     SELECT
-      tweet,COUNT(like.tweet_id) AS likes,COUNT(reply.tweet_id) AS replies,date_time AS dateTime
+      tweet,COUNT(like.like_id) AS likes,COUNT(reply.reply_id) AS replies,date_time AS dateTime
     FROM
       ((tweet JOIN follower ON tweet.user_id= follower.following_user_id) AS TA JOIN like ON TA.tweet_id=like.tweet_id) AS TB JOIN reply ON TB.tweet_id=reply.tweet_id 
     WHERE 
@@ -206,14 +233,14 @@ app.get(
     SELECT
       name,reply AS replies
     FROM
-      (((tweet JOIN follower ON tweet.user_id= follower.following_user_id) AS TA JOIN like ON TA.tweet_id=like.tweet_id) AS TB JOIN reply ON TB.tweet_id=reply.tweet_id) AS TC JOIN user ON TC.user_id=user.user_id 
+      ((tweet JOIN follower ON tweet.user_id= follower.following_user_id) AS TA JOIN like ON TA.tweet_id=like.tweet_id) AS TB JOIN reply ON TB.tweet_id=reply.tweet_id 
     WHERE 
         tweet.tweet_id=${tweetId} AND follower_user_id=2
       ;`;
     const r = await db.all(getD);
-
-    console.log(r.tweet);
-    if (r.tweet === undefined) {
+    console.log(r);
+    console.log(r[0]);
+    if (r[0]["name"] === undefined) {
       response.status(401);
       response.send("Invalid Request");
     } else {
@@ -278,6 +305,24 @@ app.delete(
       response.status(401);
       response.send("Invalid Request");
     }
+    /*const check = async () => {
+      try {
+        console.log(rdQ[0]["tweet"]);
+        const deleteTweetQuery = `
+  DELETE FROM
+    tweet
+  WHERE
+    tweet_id = ${tweetId};`;
+        await db.run(deleteTweetQuery);
+        response.send("Tweet Removed");
+      } catch (e) {
+        response.status(401);
+        response.send("Invalid Request");
+        console.log(`DB Error: ${e.message}`);
+        return;
+      }
+    };
+    check();*/
   }
 );
 /*app.get("/tweets/:tweetId/", authenticateToken, async (request, response) => {
