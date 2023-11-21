@@ -120,8 +120,7 @@ WHERE
     follower.follower_user_id=2
 ORDER BY
   date_time DESC
-LIMIT 4
-  ;`;
+LIMIT 4`;
   feed = await db.all(tweetsQ);
   console.log(feed);
   response.send(feed);
@@ -147,8 +146,7 @@ app.get("/user/following/", authenticateToken, async (request, response) => {
     FROM
       user JOIN follower ON user.user_id= follower.following_user_id
     WHERE 
-        follower_user_id=2
-      ;`;
+        follower_user_id=2`;
   const r = await db.all(getData);
   response.send(r);
   /*const q = `
@@ -166,8 +164,7 @@ app.get("/user/followers/", authenticateToken, async (request, response) => {
     FROM
       user JOIN follower ON user.user_id= follower.follower_user_id
     WHERE
-        following_user_id=2
-      ;`;
+        following_user_id=2`;
   const r = await db.all(getD);
   response.send(r);
 });
@@ -180,8 +177,7 @@ app.get("/tweets/:tweetId/", authenticateToken, async (request, response) => {
     FROM
       ((tweet JOIN follower ON tweet.user_id= follower.following_user_id) AS TA JOIN like ON TA.tweet_id=like.tweet_id) AS TB JOIN reply ON TB.tweet_id=reply.tweet_id 
     WHERE 
-        tweet.tweet_id=${tweetId} AND follower.follower_user_id=2
-      ;`;
+        tweet.tweet_id=${tweetId} AND follower.follower_user_id=2`;
   const r = await db.get(getD);
   console.log(r);
   if (r["tweet"] === null) {
@@ -210,8 +206,7 @@ app.get(
     const namesQ = `
         SELECT username AS likes
         FROM user JOIN like ON user.user_id=like.user_id
-        WHERE like.tweet_id=${tweetId}
-        ;`;
+        WHERE like.tweet_id=${tweetId}`;
     const names = await db.all(namesQ);
     console.log(names);
     if (r === undefined) {
@@ -233,14 +228,13 @@ app.get(
     SELECT
       name,reply AS replies
     FROM
-      ((tweet JOIN follower ON tweet.user_id= follower.following_user_id) AS TA JOIN like ON TA.tweet_id=like.tweet_id) AS TB JOIN reply ON TB.tweet_id=reply.tweet_id 
+      ((tweet JOIN follower ON tweet.user_id= follower.following_user_id) AS TA JOIN reply ON TA.tweet_id=reply.tweet_id ) AS TB JOIN user ON TB.follower_user_id=user.user_id
     WHERE 
-        tweet.tweet_id=${tweetId} AND follower_user_id=2
-      ;`;
+        tweet.tweet_id=${tweetId} AND follower_user_id=2`;
     const r = await db.all(getD);
     console.log(r);
     console.log(r[0]);
-    if (r[0]["name"] === undefined) {
+    if (r[0] === undefined) {
       response.status(401);
       response.send("Invalid Request");
     } else {
@@ -257,8 +251,7 @@ app.get("/user/tweets/", authenticateToken, async (request, response) => {
     FROM
       (tweet JOIN like ON tweet.tweet_id=like.tweet_id) AS T JOIN reply ON T.tweet_id=reply.tweet_id
     WHERE 
-        tweet.user_id=2
-      ;`;
+        tweet.user_id=2`;
   /*const getD = `
     SELECT
       *
@@ -277,7 +270,7 @@ app.post("/user/tweets/", authenticateToken, async (request, response) => {
   INSERT INTO
     tweet (tweet)
   VALUES
-    ('${tweet}');`;
+    ('${tweet}')`;
   await db.run(postTweetQuery);
   response.send("Created a Tweet");
 });
@@ -293,36 +286,18 @@ app.delete(
   WHERE user_id=2 AND tweet_id=${tweetId}`;
     const rdQ = await db.get(dQ);
     //console.log(rdQ[0]);
-    //console.log(rdQ);
+    console.log(rdQ);
     if (rdQ !== undefined) {
       const deleteTweetQuery = `DELETE FROM
     tweet
   WHERE
-    tweet_id = ${tweetId};`;
+    tweet_id = ${tweetId}`;
       await db.run(deleteTweetQuery);
       response.send("Tweet Removed");
     } else {
       response.status(401);
       response.send("Invalid Request");
     }
-    /*const check = async () => {
-      try {
-        console.log(rdQ[0]["tweet"]);
-        const deleteTweetQuery = `
-  DELETE FROM
-    tweet
-  WHERE
-    tweet_id = ${tweetId};`;
-        await db.run(deleteTweetQuery);
-        response.send("Tweet Removed");
-      } catch (e) {
-        response.status(401);
-        response.send("Invalid Request");
-        console.log(`DB Error: ${e.message}`);
-        return;
-      }
-    };
-    check();*/
   }
 );
 /*app.get("/tweets/:tweetId/", authenticateToken, async (request, response) => {
@@ -342,5 +317,12 @@ app.delete(
     console.log(`DB Error: ${e.message}`);
     process.exit(-1);
   }
-});*/
+});
+{
+  tweet_id: 4,
+  tweet: 'The American Jobs Plan is the largest American jobs investment since World War II.',
+  user_id: 2,
+  date_time: '2021-04-07 14:50:15'
+}
+*/
 module.exports = app;
