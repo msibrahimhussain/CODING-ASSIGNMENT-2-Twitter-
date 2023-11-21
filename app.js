@@ -1,10 +1,3 @@
-/* [{"user_id":2,"name":"Joe Biden","username":"JoeBiden","password":"$2b$10$2are6Ba69oi/Cai4aT/VM.t7AO7TsQx/.Ogz.7XG4qjuMil0v80aq","gender":"male"}]
-where follower user id = 2
-[{"follower_id":4,"follower_user_id":2,"following_user_id":1},{"follower_id":5,"follower_user_id":2,"following_user_id":4}]
-following user id =2
-[{"follower_id":1,"follower_user_id":1,"following_user_id":2},{"follower_id":8,"follower_user_id":4,"following_user_id":2}]
-
-*/
 const express = require("express");
 const path = require("path");
 const { open } = require("sqlite");
@@ -31,6 +24,23 @@ const initializeDBAndServer = async () => {
   }
 };
 initializeDBAndServer();
+
+const getLikes = async (tweetId) => {
+  const lq = `SELECT count(*)AS cl FROM like WHERE tweet_id=11
+  ;`;
+  l = await db.all(lq);
+  console.log(l);
+  return l;
+};
+
+const getReplies = async (tweetId) => {
+  const rq = `
+  SELECT count(*)AS cr FROM like WHERE tweet_id=1
+  ;`;
+  r = await db.all(rq);
+  console.log(r);
+  return r;
+};
 
 const authenticateToken = (request, response, next) => {
   let jwtToken;
@@ -124,17 +134,17 @@ LIMIT 4`;
   feed = await db.all(tweetsQ);
   console.log(feed);
   response.send(feed);
-  /*const lq = `
-  SELECT count(*)AS c FROM like WHERE tweet_id=1
+  /* const lq = `
+  SELECT count(*)AS cl FROM like WHERE tweet_id=11
   ;`;
   l = await db.all(lq);
-  console.log(l[0].c);
+  console.log(l[0].cr);
   response.send(l);
   const rq = `
-  SELECT count(*)AS c FROM like WHERE tweet_id=1
+  SELECT count(*)AS cr FROM like WHERE tweet_id=1
   ;`;
   r = await db.all(rq);
-  console.log(r[0].c);
+  console.log(r);
   response.send(r);*/
 });
 
@@ -300,29 +310,5 @@ app.delete(
     }
   }
 );
-/*app.get("/tweets/:tweetId/", authenticateToken, async (request, response) => {
-  const { tweetId } = request.params;
-  const dQ = `
-  SELECT *
-  FROM tweet JOIN user ON tweet.user_id=user.user_id
-  WHERE tweet.tweet_id=${tweetId} AND user.user_id=2
-  ;`;
-  const rdQ = await db.all(dQ);
-  try {
-    console.log(rdQ[0]["tweet"]);
-    response.send(rdQ);
-  } catch (e) {
-    response.status(401);
-    response.send("Invalid Request");
-    console.log(`DB Error: ${e.message}`);
-    process.exit(-1);
-  }
-});
-{
-  tweet_id: 4,
-  tweet: 'The American Jobs Plan is the largest American jobs investment since World War II.',
-  user_id: 2,
-  date_time: '2021-04-07 14:50:15'
-}
-*/
+
 module.exports = app;
