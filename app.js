@@ -262,29 +262,22 @@ app.delete(
     const { tweetId } = request.params;
     const dQ = `
   SELECT *
-  FROM tweet JOIN user ON tweet.user_id=user.user_id
-  WHERE tweet_id='${tweetId}' AND user.user_id=2
-  ;`;
-    const rdQ = await db.all(dQ);
-    //
-    const check = async () => {
-      try {
-        console.log(rdQ[0]["tweet"]);
-        const deleteTweetQuery = `
-  DELETE FROM
+  FROM tweet
+  WHERE user_id=2 AND tweet_id=${tweetId}`;
+    const rdQ = await db.get(dQ);
+    //console.log(rdQ[0]);
+    //console.log(rdQ);
+    if (rdQ !== undefined) {
+      const deleteTweetQuery = `DELETE FROM
     tweet
   WHERE
     tweet_id = ${tweetId};`;
-        await db.run(deleteTweetQuery);
-        response.send("Tweet Removed");
-      } catch (e) {
-        response.status(401);
-        response.send("Invalid Request");
-        console.log(`DB Error: ${e.message}`);
-        return;
-      }
-    };
-    check();
+      await db.run(deleteTweetQuery);
+      response.send("Tweet Removed");
+    } else {
+      response.status(401);
+      response.send("Invalid Request");
+    }
   }
 );
 /*app.get("/tweets/:tweetId/", authenticateToken, async (request, response) => {
